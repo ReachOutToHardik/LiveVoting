@@ -18,7 +18,14 @@ export default function Home() {
 
   useEffect(() => {
     setHasVoted(false);
-    if (currentTeam) setLocalLikes(currentTeam.likes);
+    if (currentTeam) {
+      setLocalLikes(currentTeam.likes);
+      // Check local storage for vote persistence
+      const voteKey = `voted_${currentTeam._id}`;
+      if (typeof window !== 'undefined' && localStorage.getItem(voteKey)) {
+        setHasVoted(true);
+      }
+    }
   }, [currentTeam?._id, currentTeam?.likes]);
 
   const handleVote = () => {
@@ -27,6 +34,11 @@ export default function Home() {
     // Optimistic update
     setLocalLikes((prev) => prev + 1);
     setHasVoted(true);
+    
+    // Save to local storage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`voted_${currentTeam._id}`, 'true');
+    }
 
     // Actual mutation
     likeTeamMutation({ teamId: currentTeam._id });
@@ -173,7 +185,7 @@ export default function Home() {
       
       <div className="fixed bottom-8 left-0 w-full text-center">
         <p className="text-[10px] font-medium tracking-widest text-zinc-800 uppercase">
-          Powered by Creators Tank
+          Made by Hardik • <a href="https://instagram.com/hardik" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-600 transition-colors">@hardik</a>
         </p>
       </div>
     </main>
