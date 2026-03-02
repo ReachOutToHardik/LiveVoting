@@ -13,6 +13,28 @@ export default function Home() {
 
   const [hasVoted, setHasVoted] = useState(false);
   const [localLikes, setLocalLikes] = useState(0);
+  const updatePresence = useMutation(api.presence.updatePresence);
+  const [userId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      let id = localStorage.getItem('creator_tank_user_id');
+      if (!id) {
+        id = Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('creator_tank_user_id', id);
+      }
+      return id;
+    }
+    return 'temp-' + Math.random();
+  });
+
+  // Heartbeat for presence
+  useEffect(() => {
+    if (!userId) return;
+    const interval = setInterval(() => {
+      updatePresence({ userId });
+    }, 5000); // Pulse every 5 seconds
+    updatePresence({ userId }); // Initial pulse
+    return () => clearInterval(interval);
+  }, [updatePresence, userId]);
 
   const currentTeam = teams?.find((t) => t._id === eventState?.currentTeamId);
 

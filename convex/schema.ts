@@ -13,4 +13,9 @@ export default defineSchema({
     eventName: v.optional(v.string()),
     isStarted: v.optional(v.boolean()),
   }),
+
+  presence: defineTable({
+    updatedAt: v.number(),
+    user: v.string(), // minimalist identity
+  }).index("by_updated", ["updatedAt"]),
 });
