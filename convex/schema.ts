@@ -11,6 +11,5 @@ export default defineSchema({
   state: defineTable({
     currentTeamId: v.optional(v.id("teams")),
     eventName: v.optional(v.string()),
-    isStarted: v.optional(v.boolean()),
   }),
 });

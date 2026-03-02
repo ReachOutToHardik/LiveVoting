@@ -26,34 +26,6 @@ export const getEventName = query({
   },
 });
 
-// Get event started state
-export const getIsStarted = query({
-  handler: async (ctx) => {
-    const state = await ctx.db.query("state").first();
-    return state?.isStarted || false;
-  },
-});
-
-// Start event (admin)
-export const startEvent = mutation({
-  handler: async (ctx) => {
-    const state = await ctx.db.query("state").first();
-    if (state) {
-      await ctx.db.patch(state._id, { isStarted: true });
-    }
-  },
-});
-
-// Reset event (admin)
-export const resetEvent = mutation({
-  handler: async (ctx) => {
-    const state = await ctx.db.query("state").first();
-    if (state) {
-      await ctx.db.patch(state._id, { isStarted: false });
-    }
-  },
-});
-
 // Like a team
 export const likeTeam = mutation({
   args: { teamId: v.id("teams") },

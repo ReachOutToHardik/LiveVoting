@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, Sparkles, Trophy } from 'lucide-react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -10,197 +11,226 @@ export default function Home() {
   const teams = useQuery(api.teams.getTeams) ?? [];
   const currentTeamId = useQuery(api.teams.getCurrentTeam);
   const eventName = useQuery(api.teams.getEventName) ?? 'Creators Tank';
-  const isStarted = useQuery(api.teams.getIsStarted) ?? false;
   const likeTeamMutation = useMutation(api.teams.likeTeam);
-
+  
   const [liked, setLiked] = useState(false);
-  const [burst, setBurst] = useState(false);
-  const [dots, setDots] = useState('');
+  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
 
   const currentTeam = teams.find((t) => t._id === currentTeamId);
-  const currentIndex = teams.findIndex((t) => t._id === currentTeamId);
 
+  // Reset liked when team changes
   useEffect(() => {
     setLiked(false);
   }, [currentTeamId]);
 
-  useEffect(() => {
-    if (isStarted) return;
-    const interval = setInterval(() => {
-      setDots((d) => (d.length >= 3 ? '' : d + '.'));
-    }, 500);
-    return () => clearInterval(interval);
-  }, [isStarted]);
-
   const handleLike = async () => {
     if (!currentTeamId || liked) return;
+    
     setLiked(true);
-    setBurst(true);
-    setTimeout(() => setBurst(false), 600);
-    await likeTeamMutation({ teamId: currentTeamId as Id<'teams'> });
+    await likeTeamMutation({ teamId: currentTeamId as Id<"teams"> });
+
+    // Create particle effect
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
+      id: Date.now() + i,
+      x: Math.random() * 200 - 100,
+      y: Math.random() * 200 - 100,
+    }));
+    setParticles(newParticles);
+
+    setTimeout(() => setParticles([]), 1000);
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col select-none overflow-hidden">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-3">
-        <span className="text-xs font-bold tracking-[0.3em] uppercase text-yellow-400">
-          {eventName}
-        </span>
-        {isStarted && currentTeam && (
-          <span className="text-xs font-mono text-zinc-600">
-            {String(currentIndex + 1).padStart(2, '0')} / {String(teams.length).padStart(2, '0')}
-          </span>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-dark-bg via-dark-card to-dark-accent flex items-center justify-center p-4 overflow-hidden relative">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 left-20 w-64 h-64 bg-neon-purple/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-20 w-96 h-96 bg-neon-pink/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, -50, 0],
+            y: [0, -30, 0],
+            scale: [1, 1.3, 1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
       </div>
-      <div className="h-px bg-zinc-900 mx-6" />
 
-      {/* Main */}
-      <div className="flex-1 flex items-center justify-center px-6 py-10">
+      <div className="relative z-10 w-full max-w-2xl">
+        {/* Logo/Title */}
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-center mb-12"
+        >
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Trophy className="w-12 h-12 text-neon-purple animate-float" />
+            <h1 className="text-6xl font-bold bg-gradient-to-r from-neon-purple via-neon-pink to-neon-blue bg-clip-text text-transparent">
+              {eventName}
+            </h1>
+            <Sparkles className="w-12 h-12 text-neon-pink animate-float" />
+          </div>
+          <p className="text-gray-400 text-lg">Vote for your favorite team</p>
+        </motion.div>
+
         <AnimatePresence mode="wait">
-
-          {/* ── Waiting Screen ── */}
-          {!isStarted && (
-            <motion.div
-              key="waiting"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -30 }}
-              className="text-center w-full max-w-md"
-            >
-              <div className="relative inline-flex items-center justify-center mb-10">
-                <motion.div
-                  className="absolute w-28 h-28 rounded-full border border-yellow-400/25"
-                  animate={{ scale: [1, 1.7, 1], opacity: [0.5, 0, 0.5] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                <motion.div
-                  className="absolute w-28 h-28 rounded-full border border-yellow-400/10"
-                  animate={{ scale: [1, 2.4, 1], opacity: [0.4, 0, 0.4] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-                />
-                <div className="w-20 h-20 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center z-10">
-                  <span className="text-4xl">🎬</span>
-                </div>
-              </div>
-
-              <h1 className="text-5xl font-black tracking-tight mb-3 leading-none">
-                {eventName}
-              </h1>
-              <p className="text-zinc-500 mb-6">Get your votes ready</p>
-
-              <motion.div
-                className="inline-flex items-center gap-2 border border-yellow-400/30 rounded-full px-5 py-2"
-                animate={{ opacity: [1, 0.4, 1] }}
-                transition={{ duration: 1.6, repeat: Infinity }}
-              >
-                <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
-                <span className="text-yellow-400 text-xs font-bold tracking-widest uppercase">
-                  Starting Soon{dots}
-                </span>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* ── Team Voting Screen ── */}
-          {isStarted && currentTeam && (
+          {currentTeam ? (
             <motion.div
               key={currentTeam._id}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -40 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
-              className="w-full max-w-md text-center"
+              initial={{ scale: 0.8, opacity: 0, rotateY: -90 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              exit={{ scale: 0.8, opacity: 0, rotateY: 90 }}
+              transition={{ duration: 0.5, type: "spring" }}
+              className="bg-gradient-to-br from-dark-card to-dark-accent rounded-3xl p-8 shadow-2xl border border-neon-purple/20 relative overflow-hidden"
             >
-              <p className="text-xs font-bold tracking-[0.3em] uppercase text-zinc-600 mb-5">
-                Now Voting
-              </p>
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-neon-purple/5 via-neon-pink/5 to-neon-blue/5 animate-glow" />
 
-              <h2 className="text-6xl sm:text-7xl font-black tracking-tight leading-none mb-12">
-                {currentTeam.name}
-              </h2>
-
-              {/* Like button */}
-              <div className="relative inline-block mb-8">
-                <motion.button
-                  onClick={handleLike}
-                  disabled={liked}
-                  whileTap={{ scale: liked ? 1 : 0.9 }}
-                  className="outline-none"
+              <div className="relative z-10">
+                {/* Team Name */}
+                <motion.h2
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-5xl font-bold text-center mb-8 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"
                 >
-                  <motion.div
-                    animate={burst ? { scale: [1, 1.18, 1] } : {}}
-                    transition={{ duration: 0.35 }}
+                  {currentTeam.name}
+                </motion.h2>
+
+                {/* Like Counter */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring" }}
+                  className="text-center mb-8"
+                >
+                  <div className="inline-flex items-center gap-3 bg-dark-bg/50 rounded-full px-8 py-4 border border-neon-pink/30">
+                    <Heart className="w-8 h-8 text-neon-pink fill-neon-pink" />
+                    <span className="text-4xl font-bold text-neon-pink">
+                      {currentTeam.likes}
+                    </span>
+                    <span className="text-gray-400 text-lg">likes</span>
+                  </div>
+                </motion.div>
+
+                {/* Like Button */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-center relative"
+                >
+                  <motion.button
+                    onClick={handleLike}
+                    disabled={liked}
+                    whileHover={{ scale: liked ? 1 : 1.05 }}
+                    whileTap={{ scale: liked ? 1 : 0.95 }}
                     className={`
-                      w-40 h-40 rounded-full flex flex-col items-center justify-center gap-2
-                      transition-all duration-200 border-2
-                      ${liked
-                        ? 'bg-red-500 border-red-400 shadow-[0_0_50px_rgba(239,68,68,0.4)]'
-                        : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600 active:border-red-500'
+                      relative px-12 py-6 rounded-2xl text-2xl font-bold
+                      transition-all duration-300
+                      ${liked 
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 cursor-not-allowed' 
+                        : 'bg-gradient-to-r from-neon-purple to-neon-pink hover:shadow-2xl hover:shadow-neon-purple/50'
                       }
+                      flex items-center justify-center gap-3 mx-auto
+                      border-2 border-white/20
                     `}
                   >
-                    <motion.span
-                      animate={burst ? { scale: [1, 1.5, 1] } : {}}
-                      transition={{ duration: 0.35 }}
-                      className="text-5xl leading-none"
-                    >
-                      {liked ? '❤️' : '🤍'}
-                    </motion.span>
-                    <span className={`text-[11px] font-black tracking-[0.2em] uppercase ${liked ? 'text-white' : 'text-zinc-500'}`}>
-                      {liked ? 'Voted!' : 'Vote'}
-                    </span>
-                  </motion.div>
-                </motion.button>
+                    <Heart className={`w-8 h-8 ${liked ? 'fill-white' : ''}`} />
+                    {liked ? 'Liked! ✓' : 'Like This Team'}
+                  </motion.button>
+
+                  {/* Particle effects */}
+                  <AnimatePresence>
+                    {particles.map((particle) => (
+                      <motion.div
+                        key={particle.id}
+                        initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                        animate={{
+                          x: particle.x,
+                          y: particle.y,
+                          opacity: 0,
+                          scale: 0,
+                        }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className="absolute top-1/2 left-1/2 pointer-events-none"
+                      >
+                        <Heart className="w-6 h-6 text-neon-pink fill-neon-pink" />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+
+                {liked && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center mt-6 text-emerald-400 font-semibold text-lg"
+                  >
+                    Thanks for voting! 🎉
+                  </motion.p>
+                )}
               </div>
-
-              {/* Vote count */}
-              <motion.div
-                key={currentTeam.likes}
-                initial={{ scale: 1.2, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="inline-flex items-center gap-3 bg-zinc-950 border border-zinc-900 rounded-full px-6 py-3"
-              >
-                <span className="text-red-400">♥</span>
-                <span className="text-white font-black text-xl tabular-nums">{currentTeam.likes}</span>
-                <span className="text-zinc-600 text-sm">votes</span>
-              </motion.div>
-
-              {liked && (
-                <motion.p
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-zinc-600 text-sm mt-5"
-                >
-                  Your vote has been counted ✓
-                </motion.p>
-              )}
             </motion.div>
-          )}
-
-          {/* ── Started but no team yet ── */}
-          {isStarted && !currentTeam && (
+          ) : (
             <motion.div
-              key="no-team"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center"
+              className="text-center bg-dark-card rounded-3xl p-16 border border-neon-purple/20"
             >
-              <p className="text-zinc-600 text-lg">Waiting for next team…</p>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="inline-block mb-6"
+              >
+                <Sparkles className="w-16 h-16 text-neon-purple" />
+              </motion.div>
+              <h2 className="text-3xl font-bold text-gray-300 mb-4">
+                Waiting for the next team...
+              </h2>
+              <p className="text-gray-500">The event will start soon!</p>
             </motion.div>
           )}
-
         </AnimatePresence>
-      </div>
 
-      {/* Bottom */}
-      <div className="px-6 pb-6">
-        <div className="h-px bg-zinc-900 mb-4" />
-        <p className="text-center text-zinc-800 text-xs tracking-[0.2em] uppercase">
-          Vote for your favorite team
-        </p>
+        {/* Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-center mt-8 text-gray-500 text-sm"
+        >
+          <p>
+  Made by{" "}
+  <a
+    href="https://instagram.com/hardik_joshi14"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-blue-500 hover:underline"
+  >
+    Hardik
+  </a>{" "}
+  - Real-time Voting
+</p>
+        </motion.div>
       </div>
     </div>
   );
 }
-
