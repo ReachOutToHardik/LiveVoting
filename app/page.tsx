@@ -92,7 +92,7 @@ export default function Home() {
         <AnimatePresence mode="wait">
           {currentTeam ? (
             <motion.div
-              key={currentTeam.id}
+              key={currentTeam._id}
               initial={{ scale: 0.8, opacity: 0, rotateY: -90 }}
               animate={{ scale: 1, opacity: 1, rotateY: 0 }}
               exit={{ scale: 0.8, opacity: 0, rotateY: 90 }}
