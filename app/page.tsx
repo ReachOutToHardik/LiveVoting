@@ -185,7 +185,7 @@ export default function Home() {
       
       <div className="fixed bottom-8 left-0 w-full text-center">
         <p className="text-[10px] font-medium tracking-widest text-zinc-800 uppercase">
-          Made by Hardik • <a href="https://instagram.com/hardik" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-600 transition-colors">@hardik</a>
+          Made by Hardik • <a href="https://instagram.com/hardik_joshi14" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-600 transition-colors">@hardik</a>
         </p>
       </div>
     </main>
