@@ -18,11 +18,35 @@ export const getCurrentTeam = query({
   },
 });
 
-// Get event name
-export const getEventName = query({
+// Get event state
+export const getEventState = query({
   handler: async (ctx) => {
     const state = await ctx.db.query("state").first();
-    return state?.eventName || "Creators Tank";
+    return {
+      eventName: state?.eventName || "Creators Tank",
+      isStarted: state?.isStarted || false,
+      currentTeamId: state?.currentTeamId || null,
+    };
+  },
+});
+
+// Start the event
+export const startEvent = mutation({
+  handler: async (ctx) => {
+    const state = await ctx.db.query("state").first();
+    if (state) {
+      await ctx.db.patch(state._id, { isStarted: true });
+    }
+  },
+});
+
+// Reset the event (stop it)
+export const resetEvent = mutation({
+  handler: async (ctx) => {
+    const state = await ctx.db.query("state").first();
+    if (state) {
+      await ctx.db.patch(state._id, { isStarted: false });
+    }
   },
 });
 
@@ -81,16 +105,16 @@ export const initializeTeams = mutation({
     // Set first team as current and event name
     if (teamIds.length > 0) {
       const state = await ctx.db.query("state").first();
+      const payload = {
+        currentTeamId: teamIds[0],
+        eventName: args.eventName,
+        isStarted: false,
+      };
+
       if (state) {
-        await ctx.db.patch(state._id, {
-          currentTeamId: teamIds[0],
-          eventName: args.eventName,
-        });
+        await ctx.db.patch(state._id, payload);
       } else {
-        await ctx.db.insert("state", {
-          currentTeamId: teamIds[0],
-          eventName: args.eventName,
-        });
+        await ctx.db.insert("state", payload);
       }
     }
     
